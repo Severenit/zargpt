@@ -1,9 +1,9 @@
-import {Telegraf, session} from 'telegraf';
+import {session, Telegraf} from 'telegraf';
 import {message} from 'telegraf/filters';
 import {code} from 'telegraf/format';
 import config from 'config';
-import { ogg } from './ogg.js';
-import { openai } from './openai.js';
+import {ogg} from './ogg.js';
+import {openai} from './openai.js';
 
 console.log('####: ', config.get('TEST_ENV'));
 
@@ -11,7 +11,7 @@ const bot = new Telegraf(config.get('TELEGRAM_TOKEN'));
 
 const INITIAL_SESSION = {
   messages: [],
-}
+};
 
 bot.use(session());
 
@@ -20,7 +20,8 @@ bot.command('new', async (ctx) => {
     ctx.session = INITIAL_SESSION;
     await ctx.reply(code('Жду вашего голосового или текстового сообщения...'));
   } catch (e) {
-    console.log('Error while command new ', e.message)
+    console.log('Error while command new ', e.message);
+    await ctx.reply(code(e.message));
   }
 });
 
@@ -30,14 +31,16 @@ bot.command('start', async (ctx) => {
     ctx.session = INITIAL_SESSION;
     await ctx.reply(code('Жду вашего голосового или текстового сообщения...'));
   } catch (e) {
-    console.log('Error while command start ', e.message)
+    console.log('Error while command start ', e.message);
+    await ctx.reply(code(e.message));
   }
 });
 
 bot.on(message('voice'), async (ctx) => {
+  console.log(`Start Voice Message for user id ${ctx.message.from.id}`);
   ctx.session ??= INITIAL_SESSION;
   try {
-    await ctx.reply(code('Сообщение принял... Обрабатываю...'))
+    await ctx.reply(code('Сообщение принял... Обрабатываю...'));
     const link = await ctx.telegram.getFileLink(ctx.message.voice.file_id);
     const userId = String(ctx.message.from.id);
     console.log('####: userId', userId);
@@ -57,13 +60,15 @@ bot.on(message('voice'), async (ctx) => {
     await ctx.reply(response.content);
   } catch (e) {
     console.log('Error while voices message', e.message);
+    await ctx.reply(code(e.message));
   }
 });
 
 bot.on(message('text'), async (ctx) => {
+  console.log(`Start Text Message for user id ${ctx.message.from.id}`);
   ctx.session ??= INITIAL_SESSION;
   try {
-    await ctx.reply(code('Сообщение принял... Обрабатываю...'))
+    await ctx.reply(code('Сообщение принял... Обрабатываю...'));
 
     ctx.session.messages.push({
       role: openai.roles.USER,
@@ -77,6 +82,7 @@ bot.on(message('text'), async (ctx) => {
     await ctx.reply(response.content);
   } catch (e) {
     console.log('Error while voices message', e.message);
+    await ctx.reply(code(e.message));
   }
 });
 

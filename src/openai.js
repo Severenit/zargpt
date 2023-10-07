@@ -18,9 +18,11 @@ class OpenAI {
     try {
       const response = await this.openai.chat.completions.create({
         messages,
-        model: "gpt-3.5-turbo",
+        model: "gpt-4",
+      }, {
+        maxRetries: 3,
+        timeout: 100000
       });
-      console.log('####: re', response);
       return response.choices[0].message;
     } catch (e) {
       console.log('Error while gpt chat ', e.message);
