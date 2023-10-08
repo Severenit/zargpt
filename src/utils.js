@@ -6,3 +6,5 @@ export async function removeFile(path) {
     console.log('Error while removing file ', e.message);
   }
 }
+
+export const getUserId = (ctx) => ctx.message.from.id;

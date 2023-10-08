@@ -4,21 +4,23 @@ import {code} from 'telegraf/format';
 import config from 'config';
 import {ogg} from './ogg.js';
 import {openai} from './openai.js';
+import {getUserId} from './utils.js';
 
-console.log('####: ', config.get('TEST_ENV'));
+console.log('####: test env = ', config.get('TEST_ENV'));
 
 const bot = new Telegraf(config.get('TELEGRAM_TOKEN'));
 
 const INITIAL_SESSION = {
   messages: [],
 };
+const THX_WORD = /(Пнл|пнл|Спасибо|спасибо|СПС|спс|Сяп|сяп|Thx|thx|Thanks|thanks)$/gi;
 
-bot.use(session());
+bot.use(session({defaultSession: () => INITIAL_SESSION}));
 
 bot.command('new', async (ctx) => {
   try {
     ctx.session = INITIAL_SESSION;
-    console.log('####: ctx.session', ctx.session);
+
     await ctx.reply(code('Жду вашего голосового или текстового сообщения...'));
   } catch (e) {
     console.log('Error while command new ', e.message);
@@ -38,14 +40,14 @@ bot.command('start', async (ctx) => {
 });
 
 bot.on(message('voice'), async (ctx) => {
-  console.log(`Start Voice Message for user id ${ctx.message.from.id}`);
-  console.log('####: ctx.session', ctx.session);
+  console.log(`Start Voice Message for user id ${getUserId(ctx)}`);
+
   ctx.session ??= INITIAL_SESSION;
+
   try {
     await ctx.reply(code('Сообщение принял... Обрабатываю...'));
     const link = await ctx.telegram.getFileLink(ctx.message.voice.file_id);
     const userId = String(ctx.message.from.id);
-    console.log('####: userId', userId);
     const oggPath = await ogg.create(link.href, userId);
     const mp3Path = await ogg.toMp3(oggPath, userId);
 
@@ -67,11 +69,19 @@ bot.on(message('voice'), async (ctx) => {
 });
 
 bot.on(message('text'), async (ctx) => {
-  console.log(`Start Text Message for user id ${ctx.message.from.id}`);
+  console.log(`Start Text Message for user id ${getUserId(ctx)}`);
+
+  if (ctx.message.text.match(THX_WORD)) {
+    ctx.session = INITIAL_SESSION;
+    await ctx.reply(code('Хорошо поговорили, захочешь еще приходи. Буду ждать вашего голосового или текстового сообщения...'));
+    return;
+  }
+
   ctx.session ??= INITIAL_SESSION;
+
   try {
     await ctx.reply(code('Сообщение принял... Обрабатываю...'));
-    console.log('####: ctx.message', ctx.message);
+
     ctx.session.messages.push({
       role: openai.roles.USER,
       content: ctx.message.text,
