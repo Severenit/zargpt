@@ -18,7 +18,7 @@ class OpenAI {
     try {
       const response = await this.openai.chat.completions.create({
         messages,
-        model: "gpt-4",
+        model: "gpt-3.5-turbo",
       }, {
         maxRetries: 3,
         timeout: 100000

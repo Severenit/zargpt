@@ -18,6 +18,7 @@ bot.use(session());
 bot.command('new', async (ctx) => {
   try {
     ctx.session = INITIAL_SESSION;
+    console.log('####: ctx.session', ctx.session);
     await ctx.reply(code('Жду вашего голосового или текстового сообщения...'));
   } catch (e) {
     console.log('Error while command new ', e.message);
@@ -38,6 +39,7 @@ bot.command('start', async (ctx) => {
 
 bot.on(message('voice'), async (ctx) => {
   console.log(`Start Voice Message for user id ${ctx.message.from.id}`);
+  console.log('####: ctx.session', ctx.session);
   ctx.session ??= INITIAL_SESSION;
   try {
     await ctx.reply(code('Сообщение принял... Обрабатываю...'));
@@ -69,7 +71,7 @@ bot.on(message('text'), async (ctx) => {
   ctx.session ??= INITIAL_SESSION;
   try {
     await ctx.reply(code('Сообщение принял... Обрабатываю...'));
-
+    console.log('####: ctx.message', ctx.message);
     ctx.session.messages.push({
       role: openai.roles.USER,
       content: ctx.message.text,
